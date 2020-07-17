@@ -122,7 +122,7 @@ trait RestApiClient
         ?array $data = null,
         ?array $headers = null,
         ?array $query = null
-    ): stdClass {
+    ) {
         if ($response = $this->sendAPIRequest($method, $endpoint, $data, $headers, $query)) {
         } else {
             throw new UnexpectedResponse('Response is empty');

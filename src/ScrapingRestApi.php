@@ -28,9 +28,9 @@ class ScrapingRestApi
     /*
      * GET models
      */
-    public function getModels(): object
+    public function getModels(): array
     {
-        return $this->sendAPIRequestNotEmpty('get', 'models');
+        return $this->sendAPIRequestNotEmpty('get', 'models/');
     }
 
     /*
@@ -38,15 +38,15 @@ class ScrapingRestApi
      */
     public function postModels(array $data): object
     {
-        return $this->sendAPIRequestNotEmpty('post', 'models', $data);
+        return $this->sendAPIRequestNotEmpty('post', 'models/', $data);
     }
 
     /*
      * GET stores
      */
-    public function stores(): object
+    public function stores(): array
     {
-        return $this->sendAPIRequestNotEmpty('get', 'stores');
+        return $this->sendAPIRequestNotEmpty('get', 'stores/');
     }
 
     /*
@@ -56,26 +56,30 @@ class ScrapingRestApi
     {
         $query = $network ? ['network' => $network] : null;
 
-        return $this->sendAPIRequestNotEmpty('get', "prices/{$model_id}", null, null, $query);
+        return $this->sendAPIRequestNotEmpty('get', "prices/{$model_id}/", null, null, $query);
     }
 
     /*
      * GET prices/?network={network}
      */
-    public function getAllPrices(?string $network = null): object
+    public function getAllPrices(?string $network = null, int $count = 100, int $start = 0): object
     {
         $query = $network ? ['network' => $network] : null;
+        $query = $query + [
+            'rows_per_page' => $count,
+            'start' => $start,
+        ];
 
-        return $this->sendAPIRequestNotEmpty('get', 'prices', null, null, $query);
+        return $this->sendAPIRequestNotEmpty('get', 'prices/', null, null, $query);
     }
 
     /*
      * GET prices/?network={network}
      */
-    public function getAllPricesEx(?string $network = null, ?array $data = null): object
+    public function getAllPricesEx(?array $data = null): object
     {
-        $query = $network ? ['network' => $network] : null;
+        $query = $data; // YOU LIAR!
 
-        return $this->sendAPIRequestNotEmpty('post', 'prices', $data, null, $query);
+        return $this->sendAPIRequestNotEmpty('get', 'prices/', null, null, $query);
     }
 }
