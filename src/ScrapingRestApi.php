@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MobiMarket\ScrapingTool;
 
 use MobiMarket\ScrapingTool\Entities\ApiAuth;
+use MobiMarket\ScrapingTool\Entities\RefurbishedModel;
 use MobiMarket\ScrapingTool\Traits\RestApiClient;
 
 class ScrapingRestApi
@@ -36,9 +37,25 @@ class ScrapingRestApi
     /*
      * POST models
      */
-    public function postModels(array $data): object
+    public function addModel(RefurbishedModel $model): object
     {
-        return $this->sendAPIRequestNotEmpty('post', 'models/', $data);
+        return $this->sendAPIRequestNotEmpty('post', 'models/', $model->toArray());
+    }
+
+    /*
+     * PUT models/{model_id}/
+     */
+    public function updateModel(int $model_id, RefurbishedModel $model): object
+    {
+        return $this->sendAPIRequestNotEmpty('put', "models/{$model_id}/", $model->toArray());
+    }
+
+    /*
+     * DELETE models/{model_id}/
+     */
+    public function deleteModel(int $model_id): object
+    {
+        return $this->sendAPIRequestNotEmpty('delete', "models/{$model_id}/");
     }
 
     /*
@@ -47,6 +64,14 @@ class ScrapingRestApi
     public function stores(): array
     {
         return $this->sendAPIRequestNotEmpty('get', 'stores/');
+    }
+
+    /*
+     * GET storages
+     */
+    public function storages(): array
+    {
+        return $this->sendAPIRequestNotEmpty('get', 'storages/');
     }
 
     /*
@@ -67,7 +92,7 @@ class ScrapingRestApi
         $query = $network ? ['network' => $network] : null;
         $query = $query + [
             'rows_per_page' => $count,
-            'start' => $start,
+            'start'         => $start,
         ];
 
         return $this->sendAPIRequestNotEmpty('get', 'prices/', null, null, $query);

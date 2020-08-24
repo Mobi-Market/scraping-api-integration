@@ -12,7 +12,7 @@ class FillableEntity implements Arrayable
     public function __construct(iterable $fill = [])
     {
         foreach ($fill as $property => $value) {
-            $property = Str::snake($property);
+            // $property = Str::snake($property);
 
             $this->{$property} = $value;
         }
@@ -24,7 +24,7 @@ class FillableEntity implements Arrayable
         $out = [];
 
         foreach ($raw as $property => $value) {
-            $property = Str::studly($property);
+            // $property = Str::studly($property);
 
             $out[$property] = $value;
         }
