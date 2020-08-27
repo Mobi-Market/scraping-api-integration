@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of Lifeboat.
+ * (c) Mobi-Market <info@mobi-market.co.uk>
+ * This source file is proprietary and no license is given for its use outside
+ * Mobi-Market.
+ */
+
 namespace MobiMarket\ScrapingTool;
 
 use MobiMarket\ScrapingTool\Entities\ApiAuth;
@@ -77,7 +84,7 @@ class ScrapingRestApi
     /*
      * GET prices/{model_id}?network={network}
      */
-    public function getModelPrices(int $model_id, ?string $network = null): object
+    public function getModelPrices(int $model_id, ?string $network = null): array
     {
         $query = $network ? ['network' => $network] : null;
 
