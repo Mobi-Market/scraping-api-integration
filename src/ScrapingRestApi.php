@@ -88,7 +88,7 @@ class ScrapingRestApi
     {
         $query = $network ? ['network' => $network] : null;
 
-        return $this->sendAPIRequestNotEmpty('get', "prices/{$model_id}/", null, null, $query);
+        return $this->sendAPIRequestNotEmpty('get', "prices/ready/{$model_id}/", null, null, $query);
     }
 
     /*
