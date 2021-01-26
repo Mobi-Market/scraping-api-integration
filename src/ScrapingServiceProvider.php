@@ -21,7 +21,8 @@ class ScrapingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/scraping.php' => config_path('scraping.php'),
+            __DIR__ . '/../config/scraping.php'      => config_path('scraping.php'),
+            __DIR__ . '/../config/scraping_solr.php' => config_path('scraping_solr.php'),
         ], 'scraping');
     }
 
@@ -31,8 +32,10 @@ class ScrapingServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/scraping.php', 'scraping');
+        $this->mergeConfigFrom(__DIR__ . '/../config/scraping_solr.php', 'scraping_solr');
 
         $this->bindRestApi(ScrapingRestApi::class, 'scraping');
+        $this->bindRestApi(ScrapingSolr::class, 'scraping_solr');
     }
 
     /**
@@ -40,7 +43,7 @@ class ScrapingServiceProvider extends ServiceProvider
      */
     public function provides(): array
     {
-        return [ScrapingRestApi::class];
+        return [ScrapingRestApi::class, ScrapingSolr::class];
     }
 
     /**
