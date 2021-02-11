@@ -11,12 +11,32 @@ declare(strict_types=1);
 
 namespace MobiMarket\ScrapingTool;
 
+use Carbon\Carbon;
 use MobiMarket\ScrapingTool\Entities\ApiAuth;
 use MobiMarket\ScrapingTool\Traits\RestApiClient;
 
 class ScrapingSolr
 {
     use RestApiClient;
+
+    protected $baseQuery = [
+        'sort'           => 'updated_on desc',
+        'fl'             => '*',
+        'facet'          => 'on',
+        'facet.limit'    => '-1',
+        'facet.mincount' => '1',
+        'facet.fields'   => '[\'status\', \'storage\', \'colour\']',
+        'facet.pivot'    => 'domain',
+        'wt'             => 'json',
+        'timeAllowed'    => 90000,
+        'commit'         => 'true',
+        'group'          => 'true',
+        'group.field'    => 'itemKey',
+        'group.limit'    => 1,
+        'group.sort'     => 'updated_on desc',
+        'group.format'   => 'grouped',
+        'group.main'     => false,
+    ];
 
     public function __construct(
         string $base_uri,
@@ -35,31 +55,78 @@ class ScrapingSolr
     /*
      * GET models
      */
-    public function test(): array
+    public function search(bool $sell, string $title, int $rows = 100, int $start = 0, array $extra = []): array
     {
         $query = [
-            'q'              => '( title:"p smart")',
-            'rows'           => '100000',
-            'start'          => '0',
-            'sort'           => 'updated_on desc',
-            'fl'             => '*',
-            'facet'          => 'on',
-            'facet_limit'    => '-1',
-            'facet_mincount' => '1',
-            'facet_fields'   => '[\'status\', \'storage\', \'colour\']',
-            'facet_pivot'    => 'domain',
-            'wt'             => 'json',
-            'timeAllowed'    => '90000',
-            'commit'         => 'true',
-            'group'          => 'true',
-            'group_field'    => 'itemKey',
-            'group_limit'    => '1',
-            'group_sort'     => 'updated_on desc',
-            'group_format'   => 'grouped',
-            'group_main'     => 'false',
-            'fq'             => '(storage:32GB OR storage:32GB OR storage:"32 GB") AND +status:Fair AND +domain:backmarket.co.uk AND +network:unlocked',
-        ];
+            'q'      => $title ? 'title:"' . \str_replace('"', '', $title) . '"' : '*',
+            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW] AND +network:unlocked AND +sell:' . ($sell ? 'true' : 'false'),
+            'rows'   => $rows,
+            'start'  => $start,
+        ] + $this->baseQuery + $extra;
 
-        return $this->sendAPIRequestNotEmpty('get', 'models/');
+        $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);#
+        return [$data->grouped->itemKey->groups, $data->grouped->itemKey->matches];
+    }
+
+    /*
+     * GET models
+     */
+    public function getByItemKeys(array $itemKeys): array
+    {
+        $query = [
+            'q'      => 'itemKey:(' . \implode(' OR ', $itemKeys) . ')',
+            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW]',
+            // 'rows'   => \count($itemKeys),
+            'start'  => 0,
+        ] + $this->baseQuery;
+
+        $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);
+
+        return $data->grouped->itemKey->groups;
+    }
+
+    /*
+     * GET models
+     */
+    public function getByUrls(array $urls): array
+    {
+        $query = [
+            'q'      => 'url:("' . \implode('" OR "', $urls) . '")',
+            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW]',
+            // 'rows'   => \count($urls),
+            'start'  => 0,
+        ] + $this->baseQuery;
+
+        $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);
+
+        return $data->grouped->itemKey->groups;
+    }
+
+    /*
+     * GET models
+     */
+    public function recurse(bool $sell, callable $callback, int $rows = 100, array $extra = []): void
+    {
+        $begin = Carbon::now()->yesterday()->startOfDay()->toIso8601ZuluString();
+        $query = [
+            'q'      => '*',
+            'fq'     => '+updated_on:[' . $begin . ' TO NOW] AND +network:unlocked AND +sell:' . ($sell ? 'true' : 'false'),
+            'rows'   => $rows,
+            'start'  => 0,
+        ] + $this->baseQuery + $extra;
+
+        $recurse = true;
+        while ($recurse) {
+            $data  = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);
+            $docs  = $data->grouped->itemKey->groups;
+            $count = $data->grouped->itemKey->matches;
+
+            $callback($docs, $count, $sell);
+
+            $query['start'] += $rows;
+            if ($count <= $query['start'] || \count($docs) <= 0) {
+                $recurse = false;
+            }
+        }
     }
 }

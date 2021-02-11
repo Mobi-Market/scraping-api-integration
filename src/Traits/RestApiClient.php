@@ -76,7 +76,8 @@ trait RestApiClient
         string $endpoint,
         ?array $data = null,
         ?array $headers = null,
-        ?array $query = null
+        ?array $query = null,
+        bool $dot = true
     ) {
         $body           = null;
         $contentHeaders = [
@@ -85,11 +86,11 @@ trait RestApiClient
         ];
 
         if ($data) {
-            $body                           = json_encode($data);
+            $body                           = \json_encode($data);
             $contentHeaders['Content-Type'] = 'application/json';
         }
 
-        if ($query) {
+        if ($query && $dot) {
             $query = array_dot($query);
         }
 
@@ -113,7 +114,7 @@ trait RestApiClient
 
         $body = (string) $response->getBody();
 
-        return json_decode($body) ?? $body;
+        return \json_decode($body) ?? $body;
     }
 
     protected function sendAPIRequestNotEmpty(
@@ -121,9 +122,10 @@ trait RestApiClient
         string $endpoint,
         ?array $data = null,
         ?array $headers = null,
-        ?array $query = null
+        ?array $query = null,
+        bool $dot = true
     ) {
-        if ($response = $this->sendAPIRequest($method, $endpoint, $data, $headers, $query)) {
+        if ($response = $this->sendAPIRequest($method, $endpoint, $data, $headers, $query, $dot)) {
         } else {
             throw new UnexpectedResponse('Response is empty');
         }

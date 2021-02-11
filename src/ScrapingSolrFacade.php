@@ -6,7 +6,7 @@ namespace MobiMarket\ScrapingTool;
 
 use Illuminate\Support\Facades\Facade;
 
-class ScrapingFacade extends Facade
+class ScrapingSolrFacade extends Facade
 {
     protected static function getFacadeAccessor()
     {
