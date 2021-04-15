@@ -55,62 +55,29 @@ class ScrapingSolr
     /*
      * GET models
      */
-    public function search(bool $sell, string $title, int $rows = 100, int $start = 0, array $extra = []): array
+    public function search(bool $sell, ?string $q, int $dayLimit = 7, int $rows = 100, int $start = 0, array $extra = []): array
     {
+        $begin = Carbon::now()->subDay($dayLimit)->startOfDay()->toIso8601ZuluString();
         $query = [
-            'q'      => $title ? 'title:"' . \str_replace('"', '', $title) . '"' : '*',
-            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW] AND +network:unlocked AND +sell:' . ($sell ? 'true' : 'false'),
+            'q'      => $q ?: '*',
+            'fq'     => '+updated_on:[' . $begin . ' TO NOW] AND -(-network:unlocked network:*) AND +sell:' . ($sell ? 'true' : 'false'),
             'rows'   => $rows,
             'start'  => $start,
         ] + $this->baseQuery + $extra;
 
         $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);#
-        return [$data->grouped->itemKey->groups, $data->grouped->itemKey->matches];
-    }
-
-    /*
-     * GET models
-     */
-    public function getByItemKeys(array $itemKeys): array
-    {
-        $query = [
-            'q'      => 'itemKey:(' . \implode(' OR ', $itemKeys) . ')',
-            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW]',
-            // 'rows'   => \count($itemKeys),
-            'start'  => 0,
-        ] + $this->baseQuery;
-
-        $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);
-
         return $data->grouped->itemKey->groups;
     }
 
     /*
      * GET models
      */
-    public function getByUrls(array $urls): array
+    public function recurse(bool $sell, callable $callback, int $dayLimit = 7, int $rows = 100, array $extra = []): void
     {
-        $query = [
-            'q'      => 'url:("' . \implode('" OR "', $urls) . '")',
-            'fq'     => '+updated_on:[NOW-1DAY/DAY TO NOW]',
-            // 'rows'   => \count($urls),
-            'start'  => 0,
-        ] + $this->baseQuery;
-
-        $data = $this->sendAPIRequestNotEmpty('get', '/solr/mobimarket/select', ['params' => $query], null, null, false);
-
-        return $data->grouped->itemKey->groups;
-    }
-
-    /*
-     * GET models
-     */
-    public function recurse(bool $sell, callable $callback, int $rows = 100, array $extra = []): void
-    {
-        $begin = Carbon::now()->yesterday()->startOfDay()->toIso8601ZuluString();
+        $begin = Carbon::now()->subDay($dayLimit)->startOfDay()->toIso8601ZuluString();
         $query = [
             'q'      => '*',
-            'fq'     => '+updated_on:[' . $begin . ' TO NOW] AND +network:unlocked AND +sell:' . ($sell ? 'true' : 'false'),
+            'fq'     => '+updated_on:[' . $begin . ' TO NOW] AND -(-network:unlocked network:*) AND +sell:' . ($sell ? 'true' : 'false'),
             'rows'   => $rows,
             'start'  => 0,
         ] + $this->baseQuery + $extra;
@@ -121,7 +88,7 @@ class ScrapingSolr
             $docs  = $data->grouped->itemKey->groups;
             $count = $data->grouped->itemKey->matches;
 
-            $callback($docs, $count, $sell);
+            $callback($docs, $sell);
 
             $query['start'] += $rows;
             if ($count <= $query['start'] || \count($docs) <= 0) {
