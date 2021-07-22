@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace MobiMarket\ScrapingTool;
 
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use MobiMarket\ScrapingTool\Entities\ApiAuth;
 
-class ScrapingServiceProvider extends ServiceProvider
+class ScrapingServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     /**
      * Indicates if loading of the provider is deferred.
+     *
+     * @deprecated
      */
     protected $defer = true;
 

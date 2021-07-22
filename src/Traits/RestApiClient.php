@@ -13,6 +13,7 @@ use MobiMarket\ScrapingTool\Entities\ApiAuth;
 use MobiMarket\ScrapingTool\Exceptions\RequestFailed;
 use MobiMarket\ScrapingTool\Exceptions\UnexpectedResponse;
 use Psr\Http\Message\ResponseInterface as HttpResponse;
+use Illuminate\Support\Arr;
 use stdClass;
 
 trait RestApiClient
@@ -91,7 +92,7 @@ trait RestApiClient
         }
 
         if ($query && $dot) {
-            $query = array_dot($query);
+            $query = Arr::dot($query);
         }
 
         $headers = $headers ?? [];
