@@ -2,19 +2,24 @@
 
 declare(strict_types=1);
 
+/*
+ * This file is part of a Proprietary System.
+ * Copyright belongs to the license holder. No license is given for its use outside
+ * the license holders systems.
+ */
+
 namespace MobiMarket\ScrapingTool\Traits;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use MobiMarket\ScrapingTool\Entities\ApiAuth;
 use MobiMarket\ScrapingTool\Exceptions\RequestFailed;
 use MobiMarket\ScrapingTool\Exceptions\UnexpectedResponse;
 use Psr\Http\Message\ResponseInterface as HttpResponse;
-use Illuminate\Support\Arr;
-use stdClass;
 
 trait RestApiClient
 {
@@ -42,15 +47,17 @@ trait RestApiClient
         if (true === $should_log) {
             $stack->push(
                 Middleware::log(
-                    Log::getMonolog(),
-                    new MessageFormatter('{req_body} - {res_body}')
+                    Log::getLogger(),
+                    new MessageFormatter('{req_body} - {res_body}'),
+                    'debug'
                 )
             );
 
             $stack->push(
                 Middleware::log(
-                    Log::getMonolog(),
-                    new MessageFormatter('{uri} - {method} - {code}')
+                    Log::getLogger(),
+                    new MessageFormatter('{uri} - {method} - {code}'),
+                    'debug'
                 )
             );
         }
